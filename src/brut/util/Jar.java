@@ -19,7 +19,9 @@ package brut.util;
 
 import brut.common.BrutException;
 import java.io.*;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import org.apache.commons.io.IOUtils;
 
@@ -28,6 +30,17 @@ import org.apache.commons.io.IOUtils;
  */
 abstract public class Jar {
     private final static Set<String> mLoaded = new HashSet<String>();
+    private final static Map<String, File> mExtracted =
+        new HashMap<String, File>();
+
+    public static File getResourceAsFile(String name) throws BrutException {
+        File file = mExtracted.get(name);
+        if (file == null) {
+            file = extractToTmp(name);
+            mExtracted.put(name, file);
+        }
+        return file;
+    }
 
     public static void load(String libPath) {
         if (mLoaded.contains(libPath)) {
@@ -36,7 +49,7 @@ abstract public class Jar {
 
         File libFile;
         try {
-            libFile = extractToTmp(libPath);
+            libFile = getResourceAsFile(libPath);
         } catch (BrutException ex) {
             throw new UnsatisfiedLinkError(ex.getMessage());
         }
