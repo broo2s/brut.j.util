@@ -17,6 +17,7 @@
 
 package brut.util;
 
+import brut.common.BrutException;
 import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -36,33 +37,34 @@ abstract public class Jar {
         File libFile;
         try {
             libFile = extractToTmp(libPath);
-        } catch (IOException ex) {
+        } catch (BrutException ex) {
             throw new UnsatisfiedLinkError(ex.getMessage());
         }
 
         System.load(libFile.getAbsolutePath());
     }
 
-    public static File extractToTmp(String resourcePath) throws IOException {
+    public static File extractToTmp(String resourcePath) throws BrutException {
         return extractToTmp(resourcePath, "brut_util_Jar_");
     }
 
     public static File extractToTmp(String resourcePath, String tmpPrefix)
-            throws IOException {
-        InputStream in = Class.class.getResourceAsStream(resourcePath);
-        if (in == null) {
-            throw new FileNotFoundException(resourcePath);
+            throws BrutException {
+        try {
+            InputStream in = Class.class.getResourceAsStream(resourcePath);
+            if (in == null) {
+                throw new FileNotFoundException(resourcePath);
+            }
+            File fileOut = File.createTempFile(tmpPrefix, null);
+            fileOut.deleteOnExit();
+            OutputStream out = new FileOutputStream(fileOut);
+            IOUtils.copy(in, out);
+            in.close();
+            out.close();
+            return fileOut;
+        } catch (IOException ex) {
+            throw new BrutException(
+                "Could not extract resource: " + resourcePath, ex);
         }
-
-        File fileOut = File.createTempFile(tmpPrefix, null);
-        fileOut.deleteOnExit();
-
-        OutputStream out = new FileOutputStream(fileOut);
-        IOUtils.copy(in, out);
-
-        in.close();
-        out.close();
-
-        return fileOut;
     }
 }
