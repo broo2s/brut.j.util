@@ -18,11 +18,8 @@
 package brut.util;
 
 import brut.common.BrutException;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.commons.io.IOUtils;
 
 /**
@@ -30,19 +27,50 @@ import org.apache.commons.io.IOUtils;
  */
 public class OS {
     public static void rmdir(File dir) throws BrutException {
-        rmdir(dir.getAbsolutePath());
+        if (! dir.exists()) {
+            return;
+        }
+        File[] files = dir.listFiles();
+        for (int i = 0; i < files.length; i++) {
+            File file = files[i];
+            if (file.isDirectory()) {
+                rmdir(file);
+            } else {
+                file.delete();
+            }
+        }
+        dir.delete();
     }
 
     public static void rmdir(String dir) throws BrutException {
-        exec(new String[]{"rm", "-rf", dir});
+        rmdir(new File(dir));
     }
 
     public static void cpdir(File src, File dest) throws BrutException {
-        cpdir(src.getAbsolutePath(), dest.getAbsolutePath());
+        dest.mkdirs();
+        File[] files = src.listFiles();
+        for (int i = 0; i < files.length; i++) {
+            File file = files[i];
+            File destFile = new File(dest.getPath() + File.separatorChar
+                + file.getName());
+            if (file.isDirectory()) {
+                cpdir(file, destFile);
+                continue;
+            }
+            try {
+                InputStream in = new FileInputStream(file);
+                OutputStream out = new FileOutputStream(destFile);
+                IOUtils.copy(in, out);
+                in.close();
+                out.close();
+            } catch (IOException ex) {
+                throw new BrutException("Could not copy file: " + file, ex);
+            }
+        }
     }
 
     public static void cpdir(String src, String dest) throws BrutException {
-        exec(new String[]{"cp", "-r", src, dest});
+        cpdir(new File(src), new File(dest));
     }
 
     public static void exec(String[] cmd) throws BrutException {
