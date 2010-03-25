@@ -77,6 +77,7 @@ public class OS {
         Process ps = null;
         try {
             ps = Runtime.getRuntime().exec(cmd);
+            // TODO: seems it blocks if subprogram overfill its output buffers
             if (ps.waitFor() != 0) {
                 IOUtils.copy(ps.getInputStream(), System.out);
                 IOUtils.copy(ps.getErrorStream(), System.out);
