@@ -34,4 +34,29 @@ public class BrutIO {
             } catch (IOException ex) {}
         }
     }
+
+    public static long recursiveModifiedTime(File[] files) {
+        long modified = 0;
+        for (int i = 0; i < files.length; i++) {
+            long submodified = recursiveModifiedTime(files[i]);
+            if (submodified > modified) {
+                modified = submodified;
+            }
+        }
+        return modified;
+    }
+
+    public static long recursiveModifiedTime(File file) {
+        long modified = file.lastModified();
+        if (file.isDirectory()) {
+            File[] subfiles = file.listFiles();
+            for (int i = 0; i < subfiles.length; i++) {
+                long submodified = recursiveModifiedTime(subfiles[i]);
+                if (submodified > modified) {
+                    modified = submodified;
+                }
+            }
+        }
+        return modified;
+    }
 }
