@@ -77,10 +77,10 @@ public class OS {
         Process ps = null;
         try {
             ps = Runtime.getRuntime().exec(cmd);
-            // TODO: seems it blocks if subprogram overfill its output buffers
+
+            new StreamForwarder(ps.getInputStream(), System.err).start();
+            new StreamForwarder(ps.getErrorStream(), System.err).start();
             if (ps.waitFor() != 0) {
-                IOUtils.copy(ps.getInputStream(), System.out);
-                IOUtils.copy(ps.getErrorStream(), System.out);
                 throw new BrutException(
                     "could not exec command: " + Arrays.toString(cmd));
             }
@@ -106,5 +106,34 @@ public class OS {
         } catch (IOException ex) {
             throw new BrutException("Could not create tmp dir", ex);
         }
+    }
+
+    static class StreamForwarder extends Thread {
+
+        public StreamForwarder(InputStream in, OutputStream out) {
+            mIn = in;
+            mOut = out;
+        }
+
+        @Override
+        public void run() {
+            try {
+                BufferedReader in = new BufferedReader(
+                    new InputStreamReader(mIn));
+                BufferedWriter out = new BufferedWriter(
+                    new OutputStreamWriter(mOut));
+                String line;
+                while ((line = in.readLine()) != null) {
+                    out.write(line);
+                    out.newLine();
+                }
+                out.flush();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        private final InputStream mIn;
+        private final OutputStream mOut;
     }
 }
