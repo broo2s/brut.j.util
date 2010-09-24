@@ -38,6 +38,7 @@
         <directory>${basedir}</directory>
         <includes>
           <include>LICENSE</include>
+          <include>NOTICE</include>
         </includes>
       </resource>
     </resources>
